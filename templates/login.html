@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ログイン - ドラゴンクエスト</title>
+  <link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'DotGothic16', monospace;
+      background-color: #f0f8ff;
+      text-align: center;
+      padding: 30px;
+    }
+    h1 {
+      font-size: 28px;
+    }
+    input[type="text"] {
+      padding: 8px;
+      font-family: 'DotGothic16', monospace;
+      font-size: 16px;
+      margin: 10px;
+    }
+    button {
+      padding: 8px 16px;
+      font-size: 16px;
+      cursor: pointer;
+      font-family: 'DotGothic16', monospace;
+    }
+  </style>
+</head>
+<body>
+  <h1>ドラゴンクエストにログイン</h1>
+  <p>🆔 セッションIDを入力してください</p>
+  <form method="POST" action="/login">
+    <input type="text" name="session_id" placeholder="例: abc123" required autocomplete="off" />
+    <br />
+    <button type="submit">ログインする</button>
+  </form>
+</body>
+</html>

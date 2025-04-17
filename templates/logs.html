@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>チャットログ一覧</title>
+  <style>
+    table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+    th, td {
+      padding: 8px;
+      border: 1px solid #999;
+      text-align: left;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+    .alert {
+      color: red;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>チャットログ一覧</h1>
+  <table>
+    <tr>
+      <th>セッションID</th>
+      <th>部署</th>
+      <th>年代</th>
+      <th>ユーザー発言</th>
+      <th>心理状態</th>
+      <th>ハラスメント</th> <!-- ✅ 追加 -->
+      <th>AI応答</th>
+      <th>日時</th>
+    </tr>
+    {% for log in logs %}
+    <tr>
+      <td>{{ log.session_id }}</td>
+      <td>{{ log.department | default('N/A') }}</td>
+      <td>{{ log.age_group | default('N/A') }}</td>
+      <td>{{ log.user_message }}</td>
+      <td>{{ log.psychological_state or 'N/A' }}</td>
+      <td>
+        {% if log.harassment_flag %}
+          <span class="alert">⚠️ 検出</span>
+        {% else %}
+          -
+        {% endif %}
+      </td>
+      <td>{{ log.bot_response }}</td>
+      <td>{{ log.timestamp|to_jst }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+</body>
+</html>

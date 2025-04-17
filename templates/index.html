@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ドラゴンクエスト</title>
+  <!-- ✅ ドット風フォント -->
+  <link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
+  <style>
+    /* ← CSSはここにまとめてOK */
+    body {
+      font-family: 'DotGothic16', monospace;
+      font-size: 16px;
+      letter-spacing: 1px;
+      text-align: center;
+      transition: background-color 0.3s, color 0.3s;
+      background-color: #f8f9fa;
+      color: #333;
+    }
+    input, button {
+      font-family: 'DotGothic16', monospace;
+    }
+    body.dark-theme {
+      background-color: #1e1e1e;
+      color: #f1f1f1;
+    }
+    #chat-box {
+      width: 80%;
+      max-width: 500px;
+      margin: 20px auto;
+      border: 1px solid #ccc;
+      padding: 10px;
+      height: 300px;
+      overflow-y: auto;
+      background-color: white;
+    }
+    body.dark-theme #chat-box {
+      background-color: #2e2e2e;
+      border-color: #555;
+    }
+    .message {
+      max-width: 70%;
+      margin: 10px;
+      padding: 10px 15px;
+      border-radius: 20px;
+      display: inline-block;
+      clear: both;
+    }
+    .user-message {
+      background-color: #cce5ff;
+      color: #003366;
+      text-align: right;
+      float: right;
+      border-top-right-radius: 0;
+    }
+    .bot-message {
+      background-color: #d4edda;
+      color: #1a3d1a;
+      text-align: left;
+      float: left;
+      border-top-left-radius: 0;
+    }
+    body.dark-theme .user-message {
+      background-color: #3a6fa1;
+      color: #fff;
+    }
+    body.dark-theme .bot-message {
+      background-color: #446944;
+      color: #fff;
+    }
+    .input-group {
+      margin: 10px;
+    }
+    input[type="text"], select {
+      padding: 5px;
+      width: 200px;
+    }
+    button {
+      padding: 6px 12px;
+      margin: 5px;
+      cursor: pointer;
+    }
+    hr {
+      width: 80%;
+      max-width: 500px;
+      margin: 20px auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>ドラゴンクエスト</h1>
+  <p id="session-info">🆔 セッションID: 読み込み中...</p>
+
+  <!-- 所属部署 -->
+  <div class="input-group">
+    <label>所属部署:
+      <select id="department" autocomplete="off">
+        <option value="">-- 選択してください --</option>
+        <option value="営業部">営業部</option>
+        <option value="設計部">設計部</option>
+        <option value="IC部">IC部</option>
+        <option value="積算部">積算部</option>
+        <option value="工事部">工事部</option>
+        <option value="木材部">木材部</option>
+        <option value="Re:eiwa">Re:eiwa</option>
+        <option value="走る大工">走る大工</option>
+        <option value="不動産部">不動産部</option>
+        <option value="管理統括部">管理統括部</option>
+      </select>
+    </label>
+  </div>
+
+  <!-- 年代 -->
+  <div class="input-group">
+    <label>年代:
+      <select id="age_group">
+        <option value="">-- 選択してください --</option>
+        <option value="10代">10代</option>
+        <option value="20代">20代</option>
+        <option value="30代">30代</option>
+        <option value="40代">40代</option>
+        <option value="50代">50代</option>
+        <option value="60代以上">60代以上</option>
+      </select>
+    </label>
+  </div>
+
+  <!-- 応答タイプ -->
+  <div class="input-group">
+    <label>応答タイプ:
+      <select id="preferred_response_type">
+        <option value="">-- 選択してください --</option>
+        <option value="共感">共感</option>
+        <option value="アドバイス">アドバイス</option>
+      </select>
+    </label>
+  </div>
+
+  <button id="set-profile-btn">プロフィールを設定</button>
+  <hr />
+  <button id="toggle-theme-btn">ダークテーマに切り替え</button>
+
+  <!-- チャットUI -->
+  <div id="chat-box"></div>
+  <input type="text" id="user-input" placeholder="メッセージを入力" />
+  <button id="send-button">送信</button>
+
+  <!-- ✅ スクリプト -->
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
