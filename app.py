@@ -438,6 +438,7 @@ def chat():
         user.last_psychological_state = mood
         db.session.commit()
 
+        # ✅ 応答生成
         if user.stress_count >= 4:
             response_text = "ストレスが続いているようですね。無理せず専門家の相談を受けてみませんか？"
             support = "https://www.mhlw.go.jp/kokoro/soudan.html"
@@ -448,9 +449,11 @@ def chat():
             response_text = get_response_by_mood(mood, user.preferred_response_type)
             support = None
 
+        # ✅ 心理状態の変化通知
         if previous_state != mood:
             response_text += f"（前回の心理状態「{previous_state}」から変化がありますね）"
 
+        # ✅ 文脈傾向
         recent_responses = get_recent_mood_trend(user.session_id)
         if len(recent_responses) >= 2:
             last = recent_responses[-1]
@@ -460,23 +463,17 @@ def chat():
             elif "気分が良い" in second_last and mood == "ストレスが高い":
                 response_text += " 少し気分が落ちているようですね。無理しないでください。"
 
-       # ✅ ハラスメント検出
-if detect_harassment(user_input):
-    response_text += " ※ハラスメントの可能性がある内容が確認されました。困ったときは管理統括部に相談してくださいね。"
-    if not support:
-        support = "https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/0000189195.html"
+        # ✅ ハラスメント検出
+        harassment_detected = detect_harassment(user_input)
+        if harassment_detected:
+            response_text += " ※ハラスメントの可能性がある内容が確認されました。困ったときは管理統括部に相談してくださいね。"
+            if not support:
+                support = "https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/0000189195.html"
 
-# ✅ ログアウト機能
-@app.route("/logout")
-def logout():
-    session.clear()
-    return redirect("/login")
+        # ✅ アドバイス生成
+        advice, advice_support = provide_advice(mood)
 
-# ✅ アドバイス生成
-advice, advice_support = provide_advice(mood)
-
-
-        # ✅ 一貫性スコア注釈
+        # ✅ 一貫性スコア
         consistency_score = analyze_topic_consistency(user_input, user.session_id)
         if consistency_score is not None:
             if consistency_score < 0.2:
@@ -484,7 +481,7 @@ advice, advice_support = provide_advice(mood)
             elif consistency_score > 0.7:
                 response_text += "（最近の会話内容とつながりがありますね）"
 
-               # ✅ ログ保存
+        # ✅ ログ保存（通常ログ）
         db.session.add(ChatHistory(
             session_id=user.session_id,
             user_message=user_input,
@@ -492,27 +489,10 @@ advice, advice_support = provide_advice(mood)
             department=user.department,
             age_group=user.age_group,
             psychological_state=mood,
-            harassment_flag=detect_harassment(user_input)  # ✅ 追加
+            harassment_flag=harassment_detected
         ))
-        db.session.commit()
 
-        # ✅ クライアントに返す情報
-        result = {
-            "response": response_text,
-            "state": mood,
-            "advice": advice
-        }
-        if support or advice_support:
-            result["support"] = support or advice_support
-
-        return jsonify(result)
-
-    except Exception as e:
-        print(traceback.format_exc())
-        return jsonify({"error": f"サーバー内部エラー: {str(e)}"}), 500
-
-
-        # ✅ 管理統括部向け通知ログ（ハラスメント）
+        # ✅ 管理統括部通知（ハラスメント）
         if harassment_detected:
             db.session.add(ChatHistory(
                 session_id="admin-notice",
@@ -525,6 +505,7 @@ advice, advice_support = provide_advice(mood)
 
         db.session.commit()
 
+        # ✅ クライアントへ返す情報
         result = {
             "response": response_text,
             "state": mood,
@@ -538,6 +519,14 @@ advice, advice_support = provide_advice(mood)
     except Exception as e:
         print(traceback.format_exc())
         return jsonify({"error": f"サーバー内部エラー: {str(e)}"}), 500
+
+
+# ✅ ログアウト機能（関数外に置くこと）
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect("/login")
+
 
 
 # ✅ ログ表示画面（logs.html へのレンダリング）
