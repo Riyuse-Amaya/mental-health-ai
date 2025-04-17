@@ -1,7 +1,0 @@
-README.md
-setup.py
-mlask/__init__.py
-mlask.egg-info/PKG-INFO
-mlask.egg-info/SOURCES.txt
-mlask.egg-info/dependency_links.txt
-mlask.egg-info/top_level.txt
