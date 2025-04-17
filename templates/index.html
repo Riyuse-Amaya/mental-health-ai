@@ -87,7 +87,14 @@
     }
   </style>
 </head>
-<body>
+
+<!-- ✅ ログアウトボタン：右上配置 -->
+<div style="text-align: right; padding: 10px;">
+  <form action="/logout" method="get" style="display: inline;">
+    <button type="submit">ログアウト</button>
+  </form>
+</div>
+
   <h1>心のセーブポイント</h1>
   <p id="session-info">🆔 セッションID: 読み込み中...</p>
 

@@ -10,9 +10,14 @@ from mlask import MLAsk
 import unicodedata
 import random
 import csv
-import re  
+import re
 from io import StringIO
 from flask import Response
+from dotenv import load_dotenv
+
+# ✅ .env 読み込み（このタイミングで実行）
+load_dotenv()
+
 
 # ✅ パス設定
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -455,14 +460,21 @@ def chat():
             elif "気分が良い" in second_last and mood == "ストレスが高い":
                 response_text += " 少し気分が落ちているようですね。無理しないでください。"
 
-        harassment_detected = detect_harassment(user_input)
-        if harassment_detected:
-            response_text += " ※ハラスメントの可能性がある内容が確認されました。困ったときは管理統括部に相談してくださいね。"
-            if not support:
-                support = "https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/0000189195.html"
+       # ✅ ハラスメント検出
+if detect_harassment(user_input):
+    response_text += " ※ハラスメントの可能性がある内容が確認されました。困ったときは管理統括部に相談してくださいね。"
+    if not support:
+        support = "https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/0000189195.html"
 
-        # ✅ アドバイス生成
-        advice, advice_support = provide_advice(mood)
+# ✅ ログアウト機能
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect("/login")
+
+# ✅ アドバイス生成
+advice, advice_support = provide_advice(mood)
+
 
         # ✅ 一貫性スコア注釈
         consistency_score = analyze_topic_consistency(user_input, user.session_id)
