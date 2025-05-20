@@ -437,11 +437,12 @@ def chat():
         return jsonify({"error": "セッションがありません"}), 400
 
     try:
+        data = request.get_json()
+        user_input = data.get("message", "").strip()
+
         print(f"🛠 ユーザー入力: {user_input}")
         print(f"🛠 センシティブ検出結果: {detect_sensitive_content(user_input)}")
 
-        data = request.get_json()
-        user_input = data.get("message", "").strip()
 
         user = User.query.filter_by(session_id=session["session_id"]).first()
         if not user:
