@@ -423,6 +423,7 @@ SENSITIVE_KEYWORDS = [
 
 # センシティブ判定関数
 def detect_sensitive_content(text):
+    print("📣 センシティブ判定開始")  # ← 明示的なログを追加
     normalized = unicodedata.normalize("NFKC", text.lower())
     for keyword in SENSITIVE_KEYWORDS:
         if keyword in normalized:
