@@ -91,6 +91,7 @@ def provide_advice(state):
             "少し先の予定に、楽しみを入れてみると気持ちが明るくなりますよ。"
         ]
         return random.choice(advice_list), None
+
 # 追加：会話を続けるための質問テンプレート
 FOLLOW_UP_QUESTIONS = [
     "その出来事でいちばん嬉しかったことは何ですか？",
@@ -100,7 +101,7 @@ FOLLOW_UP_QUESTIONS = [
     "その後、何か変化はありましたか？"
 ]
 
-# ✅ 応答テンプレート
+# ✅ 応答テンプレート関数（修正済み）
 def get_response_by_mood(mood, response_type):
     responses = {
         "ストレスが高い": {
@@ -141,7 +142,6 @@ def get_response_by_mood(mood, response_type):
                 "日々の小さな成功も、大きな一歩ですね！"
             ],
             "アドバイス": [
-
                 "気分が良い日は、新しいことに挑戦するチャンスかもしれませんね！",
                 "そのポジティブな気持ちを周りにもシェアしてみましょう！",
                 "ご自身を褒めてあげる時間をつくるのも大切です。",
@@ -173,19 +173,16 @@ def get_response_by_mood(mood, response_type):
         }
     }
 
-
-
-    # ✅ 応答選択（該当 mood・type がなければ fallback）
-   base = random.choice(
+    base = random.choice(
         responses.get(mood, responses["普通"]).get(response_type, responses["普通"]["共感"])
     )
 
-    # ポジティブ（“気分が良い”）または“普通”のときのみ質問を付与
     if mood in ("気分が良い", "普通"):
         follow = random.choice(FOLLOW_UP_QUESTIONS)
         return f"{base} {follow}"
 
     return base
+
 
 # ✅ ハラスメントキーワードと検出関数
 harassment_keywords = [
