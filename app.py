@@ -510,31 +510,32 @@ def chat():
                 "support": support
             })
 
-        # 通常の応答処理開始（センシティブでない場合）
-        if user.stress_count >= 4:
-            response_text = "ストレスが続いているようですね。無理せず専門家の相談を受けてみませんか？"
-            support = "https://www.mhlw.go.jp/kokoro/soudan.html"
-        elif user.stress_count == 3:
-            response_text = "最近ストレスが続いていますね…大丈夫ですか？"
-            support = None
-      else:
+       
+# 通常の応答処理開始（センシティブでない場合）
+if user.stress_count >= 4:
+    response_text = "ストレスが続いているようですね。無理せず専門家の相談を受けてみませんか？"
+    support = "https://www.mhlw.go.jp/kokoro/soudan.html"
+elif user.stress_count == 3:
+    response_text = "最近ストレスが続いていますね…大丈夫ですか？"
+    support = None
+else:
     response_text = get_response_by_mood(mood, user.preferred_response_type)
     support = None
 
-    # 履歴が1件以上あるときだけ前回の状態と比較する
-    log_count = ChatHistory.query.filter_by(session_id=user.session_id).count()
-    if log_count > 0 and previous_state != mood:
-        response_text += f"（前回の心理状態「{previous_state}」から変化がありますね）"
+# 履歴が1件以上あるときだけ前回の状態と比較する
+log_count = ChatHistory.query.filter_by(session_id=user.session_id).count()
+if log_count > 0 and previous_state != mood:
+    response_text += f"（前回の心理状態「{previous_state}」から変化がありますね）"
 
-    # 直近の感情傾向をチェック（これは常に実行）
-    recent_responses = get_recent_mood_trend(user.session_id)
-    if len(recent_responses) >= 2:
-        last = recent_responses[-1]
-        second_last = recent_responses[-2]
-        if "ストレス" in second_last and "ストレス" in last and mood == "ストレスが高い":
-            response_text += " 最近ストレスの傾向が続いているようですね。心と体の休息を意識してみてくださいね。"
-        elif "気分が良い" in second_last and mood == "ストレスが高い":
-            response_text += " 少し気分が落ちているようですね。無理しないでください。"
+# 直近の感情傾向をチェック（これは常に実行）
+recent_responses = get_recent_mood_trend(user.session_id)
+if len(recent_responses) >= 2:
+    last = recent_responses[-1]
+    second_last = recent_responses[-2]
+    if "ストレス" in second_last and "ストレス" in last and mood == "ストレスが高い":
+        response_text += " 最近ストレスの傾向が続いているようですね。心と体の休息を意識してみてくださいね。"
+    elif "気分が良い" in second_last and mood == "ストレスが高い":
+        response_text += " 少し気分が落ちているようですね。無理しないでください。"
 
 
         harassment_detected = detect_harassment(user_input)
