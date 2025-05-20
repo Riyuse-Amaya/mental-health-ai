@@ -9,4 +9,4 @@ env.bak/
 *.db-journal
 .DS_Store
 .env
-instance/chat.db
+
