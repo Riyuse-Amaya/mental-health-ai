@@ -464,7 +464,6 @@ def chat():
         print(f"🛠 ユーザー入力: {user_input}")
         print(f"🛠 センシティブ検出結果: {detect_sensitive_content(user_input)}")
 
-
         user = User.query.filter_by(session_id=session["session_id"]).first()
         if not user:
             return jsonify({"error": "ユーザーが見つかりません"}), 400
@@ -501,7 +500,6 @@ def chat():
                 harassment_flag=False,
                 sensitive_flag=True
             ))
-
             db.session.commit()
 
             return jsonify({
@@ -510,42 +508,41 @@ def chat():
                 "support": support
             })
 
-       
-# 通常の応答処理開始（センシティブでない場合）
-if user.stress_count >= 4:
-    response_text = "ストレスが続いているようですね。無理せず専門家の相談を受けてみませんか？"
-    support = "https://www.mhlw.go.jp/kokoro/soudan.html"
-elif user.stress_count == 3:
-    response_text = "最近ストレスが続いていますね…大丈夫ですか？"
-    support = None
-else:
-    response_text = get_response_by_mood(mood, user.preferred_response_type)
-    support = None
+        # ✅ 通常応答処理（センシティブでなければこちら）
+        if user.stress_count >= 4:
+            response_text = "ストレスが続いているようですね。無理せず専門家の相談を受けてみませんか？"
+            support = "https://www.mhlw.go.jp/kokoro/soudan.html"
+        elif user.stress_count == 3:
+            response_text = "最近ストレスが続いていますね…大丈夫ですか？"
+            support = None
+        else:
+            response_text = get_response_by_mood(mood, user.preferred_response_type)
+            support = None
 
-# 履歴が1件以上あるときだけ前回の状態と比較する
-log_count = ChatHistory.query.filter_by(session_id=user.session_id).count()
-if log_count > 0 and previous_state != mood:
-    response_text += f"（前回の心理状態「{previous_state}」から変化がありますね）"
+        # ✅ 初回セッションは前回との比較をスキップ
+        log_count = ChatHistory.query.filter_by(session_id=user.session_id).count()
+        if log_count > 0 and previous_state != mood:
+            response_text += f"（前回の心理状態「{previous_state}」から変化がありますね）"
 
-# 直近の感情傾向をチェック（これは常に実行）
-recent_responses = get_recent_mood_trend(user.session_id)
-if len(recent_responses) >= 2:
-    last = recent_responses[-1]
-    second_last = recent_responses[-2]
-    if "ストレス" in second_last and "ストレス" in last and mood == "ストレスが高い":
-        response_text += " 最近ストレスの傾向が続いているようですね。心と体の休息を意識してみてくださいね。"
-    elif "気分が良い" in second_last and mood == "ストレスが高い":
-        response_text += " 少し気分が落ちているようですね。無理しないでください。"
+        # ✅ 感情傾向チェック
+        recent_responses = get_recent_mood_trend(user.session_id)
+        if len(recent_responses) >= 2:
+            last = recent_responses[-1]
+            second_last = recent_responses[-2]
+            if "ストレス" in second_last and "ストレス" in last and mood == "ストレスが高い":
+                response_text += " 最近ストレスの傾向が続いているようですね。心と体の休息を意識してみてくださいね。"
+            elif "気分が良い" in second_last and mood == "ストレスが高い":
+                response_text += " 少し気分が落ちているようですね。無理しないでください。"
 
-
+        # ✅ ハラスメント検出
         harassment_detected = detect_harassment(user_input)
         if harassment_detected:
             response_text += " ※ハラスメントの可能性がある内容が確認されました。困ったときは管理統括部に相談してくださいね。"
             if not support:
                 support = "https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/0000189195.html"
 
+        # ✅ アドバイスと一貫性
         advice, advice_support = provide_advice(mood)
-
         consistency_score = analyze_topic_consistency(user_input, user.session_id)
         if consistency_score is not None:
             if consistency_score < 0.2:
@@ -553,7 +550,7 @@ if len(recent_responses) >= 2:
             elif consistency_score > 0.7:
                 response_text += "（最近の会話内容とつながりがありますね）"
 
-        # ✅ 通常ログ保存
+        # ✅ ログ保存
         db.session.add(ChatHistory(
             session_id=user.session_id,
             user_message=user_input,
@@ -590,8 +587,6 @@ if len(recent_responses) >= 2:
     except Exception as e:
         print(traceback.format_exc())
         return jsonify({"error": f"サーバー内部エラー: {str(e)}"}), 500
-
-
 
 # ✅ ログアウト機能（関数外に置くこと）
 @app.route("/logout")
