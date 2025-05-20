@@ -527,7 +527,6 @@ def chat():
         response_text += f"（前回の心理状態「{previous_state}」から変化がありますね）"
 
 
-
         recent_responses = get_recent_mood_trend(user.session_id)
         if len(recent_responses) >= 2:
             last = recent_responses[-1]
