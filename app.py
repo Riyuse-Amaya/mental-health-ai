@@ -56,6 +56,7 @@ class ChatHistory(db.Model):
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     psychological_state = db.Column(db.String(20))  # ← ✅ 追加
     harassment_flag = db.Column(db.Boolean, default=False)
+    sensitive_flag = db.Column(db.Boolean, default=False)
 
 
 # ✅ アドバイス生成
@@ -414,12 +415,30 @@ def get_recent_mood_trend(session_id, limit=3):
     )
     return [log.bot_response for log in reversed(recent_logs)]
 
+# センシティブキーワード一覧
+SENSITIVE_KEYWORDS = [
+    "死にたい", "消えたい", "いなくなりたい", "限界", "やめたい",
+    "消えたくなる", "つらい", "もう無理", "終わりにしたい"
+]
+
+# センシティブ判定関数
+def detect_sensitive_content(text):
+    normalized = unicodedata.normalize("NFKC", text.lower())
+    for keyword in SENSITIVE_KEYWORDS:
+        if keyword in normalized:
+            print(f"🔍 センシティブキーワード検出: {keyword}")
+            return True
+    return False
+
 @app.route("/chat", methods=["POST"])
 def chat():
     if "session_id" not in session:
         return jsonify({"error": "セッションがありません"}), 400
 
     try:
+        print(f"🛠 ユーザー入力: {user_input}")
+        print(f"🛠 センシティブ検出結果: {detect_sensitive_content(user_input)}")
+
         data = request.get_json()
         user_input = data.get("message", "").strip()
 
@@ -438,7 +457,37 @@ def chat():
         user.last_psychological_state = mood
         db.session.commit()
 
-        # ✅ 応答生成
+        # ✅ センシティブ発言検出（優先処理）
+        sensitive_flag = detect_sensitive_content(user_input)
+        if sensitive_flag:
+            response_text = (
+                "そのようなお気持ちを打ち明けてくださってありがとうございます。\n"
+                "つらい時には一人で抱えず、誰かに話すことがとても大切です。\n"
+                "必要であれば、以下の相談窓口もご利用ください：\n"
+                "📞 いのちの電話：https://www.find-help.jp/"
+            )
+            support = "https://www.find-help.jp/"
+
+            db.session.add(ChatHistory(
+                session_id=user.session_id,
+                user_message=user_input,
+                bot_response=response_text,
+                department=user.department,
+                age_group=user.age_group,
+                psychological_state=mood,
+                harassment_flag=False,
+                sensitive_flag=True
+            ))
+
+            db.session.commit()
+
+            return jsonify({
+                "response": response_text,
+                "state": mood,
+                "support": support
+            })
+
+        # 通常の応答処理開始（センシティブでない場合）
         if user.stress_count >= 4:
             response_text = "ストレスが続いているようですね。無理せず専門家の相談を受けてみませんか？"
             support = "https://www.mhlw.go.jp/kokoro/soudan.html"
@@ -449,11 +498,9 @@ def chat():
             response_text = get_response_by_mood(mood, user.preferred_response_type)
             support = None
 
-        # ✅ 心理状態の変化通知
         if previous_state != mood:
             response_text += f"（前回の心理状態「{previous_state}」から変化がありますね）"
 
-        # ✅ 文脈傾向
         recent_responses = get_recent_mood_trend(user.session_id)
         if len(recent_responses) >= 2:
             last = recent_responses[-1]
@@ -463,17 +510,14 @@ def chat():
             elif "気分が良い" in second_last and mood == "ストレスが高い":
                 response_text += " 少し気分が落ちているようですね。無理しないでください。"
 
-        # ✅ ハラスメント検出
         harassment_detected = detect_harassment(user_input)
         if harassment_detected:
             response_text += " ※ハラスメントの可能性がある内容が確認されました。困ったときは管理統括部に相談してくださいね。"
             if not support:
                 support = "https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/0000189195.html"
 
-        # ✅ アドバイス生成
         advice, advice_support = provide_advice(mood)
 
-        # ✅ 一貫性スコア
         consistency_score = analyze_topic_consistency(user_input, user.session_id)
         if consistency_score is not None:
             if consistency_score < 0.2:
@@ -481,7 +525,7 @@ def chat():
             elif consistency_score > 0.7:
                 response_text += "（最近の会話内容とつながりがありますね）"
 
-        # ✅ ログ保存（通常ログ）
+        # ✅ 通常ログ保存
         db.session.add(ChatHistory(
             session_id=user.session_id,
             user_message=user_input,
@@ -489,10 +533,10 @@ def chat():
             department=user.department,
             age_group=user.age_group,
             psychological_state=mood,
-            harassment_flag=harassment_detected
+            harassment_flag=harassment_detected,
+            sensitive_flag=False
         ))
 
-        # ✅ 管理統括部通知（ハラスメント）
         if harassment_detected:
             db.session.add(ChatHistory(
                 session_id="admin-notice",
@@ -505,7 +549,6 @@ def chat():
 
         db.session.commit()
 
-        # ✅ クライアントへ返す情報
         result = {
             "response": response_text,
             "state": mood,
@@ -519,6 +562,7 @@ def chat():
     except Exception as e:
         print(traceback.format_exc())
         return jsonify({"error": f"サーバー内部エラー: {str(e)}"}), 500
+
 
 
 # ✅ ログアウト機能（関数外に置くこと）
