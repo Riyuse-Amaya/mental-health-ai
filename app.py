@@ -426,10 +426,13 @@ SENSITIVE_KEYWORDS = [
 
 # センシティブ判定関数
 def detect_sensitive_content(text):
-    print("📣 センシティブ判定開始")  # ← 明示的なログを追加
+    print("📣 センシティブ判定開始")
     normalized = unicodedata.normalize("NFKC", text.lower())
+    hiragana_text = to_hiragana(normalized)
+
     for keyword in SENSITIVE_KEYWORDS:
-        if keyword in normalized:
+        keyword_hiragana = to_hiragana(keyword)
+        if keyword in normalized or keyword_hiragana in hiragana_text:
             print(f"🔍 センシティブキーワード検出: {keyword}")
             return True
     return False
