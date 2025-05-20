@@ -526,15 +526,16 @@ def chat():
     if log_count > 0 and previous_state != mood:
         response_text += f"（前回の心理状態「{previous_state}」から変化がありますね）"
 
+    # 直近の感情傾向をチェック（これは常に実行）
+    recent_responses = get_recent_mood_trend(user.session_id)
+    if len(recent_responses) >= 2:
+        last = recent_responses[-1]
+        second_last = recent_responses[-2]
+        if "ストレス" in second_last and "ストレス" in last and mood == "ストレスが高い":
+            response_text += " 最近ストレスの傾向が続いているようですね。心と体の休息を意識してみてくださいね。"
+        elif "気分が良い" in second_last and mood == "ストレスが高い":
+            response_text += " 少し気分が落ちているようですね。無理しないでください。"
 
-        recent_responses = get_recent_mood_trend(user.session_id)
-        if len(recent_responses) >= 2:
-            last = recent_responses[-1]
-            second_last = recent_responses[-2]
-            if "ストレス" in second_last and "ストレス" in last and mood == "ストレスが高い":
-                response_text += " 最近ストレスの傾向が続いているようですね。心と体の休息を意識してみてくださいね。"
-            elif "気分が良い" in second_last and mood == "ストレスが高い":
-                response_text += " 少し気分が落ちているようですね。無理しないでください。"
 
         harassment_detected = detect_harassment(user_input)
         if harassment_detected:
