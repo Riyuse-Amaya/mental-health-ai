@@ -543,12 +543,17 @@ def chat():
 
         # ✅ アドバイスと一貫性
         advice, advice_support = provide_advice(mood)
-        consistency_score = analyze_topic_consistency(user_input, user.session_id)
-        if consistency_score is not None:
-            if consistency_score < 0.2:
-                response_text += "（最近の話題と少しずれているようですね。何かあったのかもしれませんね）"
-            elif consistency_score > 0.7:
-                response_text += "（最近の会話内容とつながりがありますね）"
+
+# ✅ consistency_score による話題の一貫性チェック → 初回はスキップ
+log_count = ChatHistory.query.filter_by(session_id=user.session_id).count()
+if log_count > 0:
+    consistency_score = analyze_topic_consistency(user_input, user.session_id)
+    if consistency_score is not None:
+        if consistency_score < 0.2:
+            response_text += "（最近の話題と少しずれているようですね。何かあったのかもしれませんね）"
+        elif consistency_score > 0.7:
+            response_text += "（最近の会話内容とつながりがありますね）"
+
 
         # ✅ ログ保存
         db.session.add(ChatHistory(
