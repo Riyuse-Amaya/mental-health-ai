@@ -521,8 +521,11 @@ def chat():
             response_text = get_response_by_mood(mood, user.preferred_response_type)
             support = None
 
-        if previous_state != mood:
-            response_text += f"（前回の心理状態「{previous_state}」から変化がありますね）"
+        # 履歴が1件以上あるときだけ前回の状態と比較する
+　　　　log_count = ChatHistory.query.filter_by(session_id=user.session_id).count()
+　　　　if log_count > 0 and previous_state != mood:
+    　　response_text += f"（前回の心理状態「{previous_state}」から変化がありますね）"
+
 
         recent_responses = get_recent_mood_trend(user.session_id)
         if len(recent_responses) >= 2:
