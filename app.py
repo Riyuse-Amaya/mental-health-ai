@@ -541,20 +541,18 @@ def chat():
             if not support:
                 support = "https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/0000189195.html"
 
-        # ✅ アドバイスと一貫性
+                # ✅ アドバイスと一貫性
         advice, advice_support = provide_advice(mood)
 
-# ✅ consistency_score による話題の一貫性チェック（初回セッション時はスキップ）
-log_count = ChatHistory.query.filter_by(session_id=user.session_id).count()
-if log_count > 0:
-    consistency_score = analyze_topic_consistency(user_input, user.session_id)
-    if consistency_score is not None:
-        if consistency_score < 0.2:
-            response_text += "（最近の話題と少しずれているようですね。何かあったのかもしれませんね）"
-        elif consistency_score > 0.7:
-            response_text += "（最近の会話内容とつながりがありますね）"
-
-
+        # ✅ consistency_score による話題の一貫性チェック（初回セッション時はスキップ）
+        log_count = ChatHistory.query.filter_by(session_id=user.session_id).count()
+        if log_count > 0:
+            consistency_score = analyze_topic_consistency(user_input, user.session_id)
+            if consistency_score is not None:
+                if consistency_score < 0.2:
+                    response_text += "（最近の話題と少しずれているようですね。何かあったのかもしれませんね）"
+                elif consistency_score > 0.7:
+                    response_text += "（最近の会話内容とつながりがありますね）"
 
         # ✅ ログ保存
         db.session.add(ChatHistory(
@@ -589,6 +587,7 @@ if log_count > 0:
             result["support"] = support or advice_support
 
         return jsonify(result)
+
 
     except Exception as e:
         print(traceback.format_exc())
